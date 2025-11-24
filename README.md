@@ -34,74 +34,37 @@ __Procedure__:
 
 CODE:
 ```
-import numpy as np
-import matplotlib.pyplot as plt
+Fs = 56300; t = 0:1/Fs:0.02;
 
-# Time variables
-Fs = 5000            # Sampling frequency
-t = np.arange(0, 0.04, 1/Fs)
+m1 = sin(2*%pi200t); m2 = sin(2*%pi300t); m3 = sin(2*%pi400t); m4 = sin(2*%pi500t); m5 = sin(2*%pi600t); m6 = sin(2*%pi700t);
 
-# Message signals
-Am1, Fm1 = 1, 50     # Message 1
-Am2, Fm2 = 1, 100    # Message 2
+c1 = 3000; c2 = 6000; c3 = 9000; c4 = 12000; c5 = 15000; c6 = 18000;
 
-m1 = Am1 * np.sin(2*np.pi*Fm1*t)
-m2 = Am2 * np.sin(2*np.pi*Fm2*t)
+carrier1 = cos(2*%pic1t); carrier2 = cos(2*%pic2t); carrier3 = cos(2*%pic3t); carrier4 = cos(2*%pic4t); carrier5 = cos(2*%pic5t); carrier6 = cos(2*%pic6t);
 
-# Carrier signals for FDM
-Fc1 = 500
-Fc2 = 1200
+s1 = m1 .* carrier1; s2 = m2 .* carrier2; s3 = m3 .* carrier3; s4 = m4 .* carrier4; s5 = m5 .* carrier5; s6 = m6 .* carrier6;
 
-c1 = np.cos(2*np.pi*Fc1*t)
-c2 = np.cos(2*np.pi*Fc2*t)
+s_total = s1 + s2 + s3 + s4 + s5 + s6;
 
-# Modulation (DSB-SC)
-s1 = m1 * c1
-s2 = m2 * c2
+// Demultiplex: multiply by carriers to shift each band back to baseband r1 = s_total .* carrier1; r2 = s_total .* carrier2; r3 = s_total .* carrier3; r4 = s_total .* carrier4; r5 = s_total .* carrier5; r6 = s_total .* carrier6;
 
-# Multiplexed signal (FDM combined)
-fdm_signal = s1 + s2
+// Simple FFT-based ideal low-pass filter (avoids butter/toolbox issues) function y = ideal_lowpass_fft(x, Fs, fc) N = length(x); X = fft(x); f = Fs*(0:N-1)/N; mask = (f <= fc) | (f >= Fs-fc); Y = X .* mask; y = real(ifft(Y)); endfunction
 
-# Demodulation
-d1 = fdm_signal * c1
-d2 = fdm_signal * c2
+fc = 1000; dm1 = ideal_lowpass_fft(r1, Fs, fc); dm2 = ideal_lowpass_fft(r2, Fs, fc); dm3 = ideal_lowpass_fft(r3, Fs, fc); dm4 = ideal_lowpass_fft(r4, Fs, fc); dm5 = ideal_lowpass_fft(r5, Fs, fc); dm6 = ideal_lowpass_fft(r6, Fs, fc);
 
-# Low-pass filter (simple moving average)
-def low_pass_filter(sig, N=200):
-    return np.convolve(sig, np.ones(N)/N, mode='same')
+figure(1); subplot(3,2,1); plot(t,m1); title("Message Signal 1"); subplot(3,2,2); plot(t,m2); title("Message Signal 2"); subplot(3,2,3); plot(t,m3); title("Message Signal 3"); subplot(3,2,4); plot(t,m4); title("Message Signal 4"); subplot(3,2,5); plot(t,m5); title("Message Signal 5"); subplot(3,2,6); plot(t,m6); title("Message Signal 6");
 
-dm1 = low_pass_filter(d1)
-dm2 = low_pass_filter(d2)
+figure(2); plot(t, s_total); title("Multiplexed FDM Signal");
 
-# Plot all signals
-plt.figure(figsize=(12, 18))
-
-plt.subplot(6,1,1)
-plt.plot(t, m1)
-plt.title("Message Signal m1 (50 Hz)")
-
-plt.subplot(6,1,2)
-plt.plot(t, m2)
-plt.title("Message Signal m2 (100 Hz)")
-
-plt.subplot(6,1,3)
-plt.plot(t, fdm_signal)
-plt.title("Multiplexed FDM Signal")
-
-plt.subplot(6,1,4)
-plt.plot(t, dm1)
-plt.title("Demodulated Signal 1 (Recovered m1)")
-
-plt.subplot(6,1,5)
-plt.plot(t, dm2)
-plt.title("Demodulated Signal 2 (Recovered m2)")
-
-plt.tight_layout()
-plt.show()
+figure(3); subplot(3,2,1); plot(t,dm1); title("Recovered Signal 1"); subplot(3,2,2); plot(t,dm2); title("Recovered Signal 2"); subplot(3,2,3); plot(t,dm3); title("Recovered Signal 3"); subplot(3,2,4); plot(t,dm4); title("Recovered Signal 4"); subplot(3,2,5); plot(t,dm5); title("Recovered Signal 5"); subplot(3,2,6); plot(t,dm6); title("Recovered Signal 6");
 ```
 __Output_:
 
-![WhatsApp Image 2025-11-19 at 21 19 27_22d68d67](https://github.com/user-attachments/assets/8e77e656-eb8f-4c34-a27a-3f13cca015ba)
+<img width="1186" height="790" alt="image" src="https://github.com/user-attachments/assets/9aeb62e8-d4f1-4726-ae37-e74aff41d93b" />
+
+<img width="989" height="390" alt="image" src="https://github.com/user-attachments/assets/6da4317b-6a1f-45de-92a5-94abd7eadac5" />
+
+<img width="1186" height="790" alt="image" src="https://github.com/user-attachments/assets/e79744e7-48a6-4de2-9750-af6cfe2115a3" />
 
 __Result__:
 
